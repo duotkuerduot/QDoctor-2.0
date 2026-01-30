@@ -1,0 +1,20 @@
+# --- API Keys & Secrets ---
+.env
+
+# --- Python Environment ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# --- QDoctor Storage & Database ---
+storage/qbrain_faiss_index/
+storage/cache_data*
+
+# --- Operating System Files ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
