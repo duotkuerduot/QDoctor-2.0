@@ -19,5 +19,3 @@ class Settings:
         TOP_K = int(os.getenv("TOP_K", 5))
     except (ValueError, TypeError):
         TOP_K = 5
-
-    settings = Settings() 
