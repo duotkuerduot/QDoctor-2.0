@@ -56,8 +56,9 @@ pip install -r requirements.txt
 
 3. Set up environment variables: Create a .env file in the root directory:
 
-Code snippet
+```bash
 GROQ_API_KEY=your_api_key_here
+```
 
 4. Initialize the Knowledge Base: Run the setup script to index your PDF documents in QBrain/:
 
