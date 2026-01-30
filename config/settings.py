@@ -13,6 +13,7 @@ class Settings:
     KB_PATH = os.getenv("KB_PATH", "QBrain")
     VECTOR_DB_PATH = os.path.join(BASE_DIR, "storage", "qbrain_faiss_index")
     EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+    LLM_MODEL = "llama-3.3-70b-versatile" 
     
 
     try:
