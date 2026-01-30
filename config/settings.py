@@ -8,6 +8,7 @@ class Settings:
     GROQ_GENERATOR_API_KEY = os.getenv("GROQ_GENERATOR_API_KEY")
     GROQ_VALIDATOR_API_KEY = os.getenv("GROQ_VALIDATOR_API_KEY")
 
+    CACHE_PATH: str = os.getenv("CACHE_PATH", "storage/qdoctor_cache.json")
 
     KB_PATH = os.getenv("KB_PATH", "QBrain")
     VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH", "storage/qbrain_faiss_index")
