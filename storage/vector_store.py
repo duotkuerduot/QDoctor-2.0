@@ -5,7 +5,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 from langchain_community.document_loaders import DirectoryLoader, TextLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from config.settings import settings
+from config.settings import Settings
 
 VECTOR_STORE_PATH = settings.VECTOR_DB_PATH
 
