@@ -8,10 +8,10 @@ class Settings:
     GROQ_GENERATOR_API_KEY = os.getenv("GROQ_GENERATOR_API_KEY")
     GROQ_VALIDATOR_API_KEY = os.getenv("GROQ_VALIDATOR_API_KEY")
 
-    CACHE_PATH: str = os.getenv("CACHE_PATH", "storage/qdoctor_cache.json")
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     KB_PATH = os.getenv("KB_PATH", "QBrain")
-    VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH", "storage/qbrain_faiss_index")
+    VECTOR_DB_PATH = os.path.join(BASE_DIR, "storage", "qbrain_faiss_index")
     EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
     
 

@@ -26,6 +26,10 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 # Copy the rest of the application
 COPY --chown=user . .
 
+# Ensure storage directory exists and has permissions
+RUN mkdir -p $HOME/app/storage/qbrain_faiss_index && \
+    chmod -R 777 $HOME/app/storage
+
 # Initialize the FAISS index during build
 # This ensures the 'storage/' folder is ready when the app starts
 RUN python setup.py
