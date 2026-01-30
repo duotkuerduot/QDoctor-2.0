@@ -1,3 +1,11 @@
+---
+title: Qdoctor
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 ## QDoctor
 
 A Specialized AI Tool for Mental Health & Medical Guidelines in Kenya
