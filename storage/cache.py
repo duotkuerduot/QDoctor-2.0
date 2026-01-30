@@ -4,7 +4,7 @@ from config.settings import settings
 
 class QCache:
     def __init__(self):
-        os.makedirs(os.path.dirname(settings.CACHE_PATH), exist_ok=True)
+        os.makedirs(os.path.dirname(settings.BASE_DIR), exist_ok=True)
         self.cache_file = settings.CACHE_PATH
 
     def get(self, question: str):
