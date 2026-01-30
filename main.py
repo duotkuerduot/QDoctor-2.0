@@ -1,25 +1,25 @@
 import os
+from fastapi import FastAPI
 from core.orchestrator import Orchestrator
+import uvicorn
 
-def main():
-    # Initialize System
-    app = Orchestrator()
+app = FastAPI(title="QDoctor 2.0 API")
+# Initialize System
+qdoctor = Orchestrator()
 
-    print("QDoctor System Ready (Type 'quit' to exit)")
-    
-    while True:
-        try:
-            user_input = input("\nUser: ")
-            if user_input.lower() in ["quit", "exit"]:
-                break
-            
-            response = app.process_query(user_input)
-            print(f"QDoctor: {response}")
-            
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            print(f"System Error: {e}")
+@app.get("/")
+def read_root():
+    return {"message": "QDoctor System Ready", "status": "healthy"}
+
+@app.post("/ask")
+def ask_question(query: str):
+    try:
+        response = qdoctor.process_query(query)
+        return {"response": response}
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
-    main()
+    # Hugging Face Spaces requires port 7860
+    port = int(os.environ.get("PORT", 7860))
+    uvicorn.run(app, host="0.0.0.0", port=port)
