@@ -5,7 +5,7 @@ from config.settings import settings
 class QCache:
     def __init__(self):
         os.makedirs(os.path.dirname(settings.BASE_DIR), exist_ok=True)
-        self.cache_file = settings.CACHE_PATH
+        self.cache_file = os.path.join(settings.BASE_DIR, "storage", "qdoctor_cache")
 
     def get(self, question: str):
         """Retrieve answer if exists."""
