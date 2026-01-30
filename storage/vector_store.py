@@ -7,7 +7,7 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader, Py
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from config.settings import Settings
 
-VECTOR_STORE_PATH = settings.VECTOR_DB_PATH
+VECTOR_STORE_PATH = Settings.VECTOR_DB_PATH
 
 class QBrainVectorStore:
     def __init__(self, embedding_model=None):
