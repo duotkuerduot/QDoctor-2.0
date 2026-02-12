@@ -1,9 +1,22 @@
 import os
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from core.orchestrator import Orchestrator
 import uvicorn
 
 app = FastAPI(title="QDoctor 2.0 API")
+
+# --- CORS CONFIGURATION ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://qdoctor-ai-frontend.vercel.app", 
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Initialize System
 qdoctor = Orchestrator()
 

@@ -1,5 +1,5 @@
 ---
-title: Qdoctor
+title: QDoctor
 colorFrom: blue
 colorTo: green
 sdk: docker
