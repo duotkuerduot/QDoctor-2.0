@@ -9,3 +9,4 @@ faiss-cpu
 gunicorn
 uvicorn
 fastapi
+rank_bm25
