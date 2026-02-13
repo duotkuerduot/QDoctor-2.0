@@ -1,5 +1,6 @@
 groq
 langchain
+langchain-core
 langchain-community
 langchain-huggingface
 python-dotenv
