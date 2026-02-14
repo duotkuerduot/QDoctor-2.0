@@ -5,7 +5,10 @@ from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
 from core.orchestrator import Orchestrator
+from dotenv import load_dotenv
 import uvicorn
+
+load_dotenv()
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO)
