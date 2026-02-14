@@ -7,6 +7,7 @@ class Settings:
     GROQ_DECISION_API_KEY = os.getenv("GROQ_DECISION_API_KEY")
     GROQ_GENERATOR_API_KEY = os.getenv("GROQ_GENERATOR_API_KEY")
     GROQ_VALIDATOR_API_KEY = os.getenv("GROQ_VALIDATOR_API_KEY")
+    TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
