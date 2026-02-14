@@ -20,6 +20,9 @@ app = FastAPI(title="QDoctor 2.0 API")
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
+if not BOT_TOKEN:
+    logger.error("TELEGRAM_BOT_TOKEN is not set. Telegram webhook handlers will not be able to send messages.")
+
 # 2. CORS - Updated for your Vercel Frontend
 app.add_middleware(
     CORSMiddleware,
@@ -38,11 +41,24 @@ MAX_MEMORY = 10
 
 async def send_telegram_action(chat_id: int, action: str = "typing"):
     """Sends a 'typing' status to Telegram."""
-    async with httpx.AsyncClient() as client:
-        await client.post(f"{TELEGRAM_API}/sendChatAction", json={"chat_id": chat_id, "action": action})
+    if not BOT_TOKEN:
+        return
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(
+                f"{TELEGRAM_API}/sendChatAction",
+                json={"chat_id": chat_id, "action": action},
+            )
+    except httpx.HTTPError as e:
+        logger.error(f"Telegram Action Error: {e}")
 
 async def send_telegram_message(chat_id: int, text: str):
     """Sends the final AI response to Telegram."""
+    if not BOT_TOKEN:
+        logger.error("Cannot send Telegram message: TELEGRAM_BOT_TOKEN is missing.")
+        return
+
     async with httpx.AsyncClient() as client:
         try:
             await client.post(f"{TELEGRAM_API}/sendMessage", json={
@@ -50,7 +66,7 @@ async def send_telegram_message(chat_id: int, text: str):
                 "text": text,
                 "parse_mode": "Markdown" # Allows bolding/lists in answers
             })
-        except Exception as e:
+        except httpx.HTTPError as e:
             logger.error(f"Telegram Send Error: {e}")
 
 def get_contextual_query(chat_id: int, current_query: str) -> str:
