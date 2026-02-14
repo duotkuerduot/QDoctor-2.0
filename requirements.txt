@@ -3,6 +3,7 @@ langchain
 langchain-core
 langchain-community
 langchain-huggingface
+httpx
 python-dotenv
 sentence-transformers
 pypdf
