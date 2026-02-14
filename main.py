@@ -28,7 +28,6 @@ app.add_middleware(
 
 # 3. Global Instances & Memory
 qdoctor = Orchestrator()
-# Memory structure: { chat_id: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}] }
 chat_memory: Dict[int, List[Dict[str, str]]] = {}
 MAX_MEMORY = 10 
 
@@ -71,8 +70,6 @@ def read_root():
 async def ask_question(query: str):
     """Stateless endpoint for React frontend."""
     try:
-        # Note: Frontend query usually comes in a JSON body, 
-        # but sticking to your existing param pattern for compatibility.
         response = qdoctor.process_query(query)
         return {"response": response}
     except Exception as e:
@@ -86,11 +83,7 @@ async def telegram_webhook(request: Request, background_tasks: BackgroundTasks):
     if "message" in data and "text" in data["message"]:
         chat_id = data["message"]["chat"]["id"]
         user_text = data["message"]["text"]
-
-        # 1. Immediately send 'typing' status
         background_tasks.add_task(send_telegram_action, chat_id)
-
-        # 2. Process AI logic in the background so we can return OK (200) to Telegram now
         background_tasks.add_task(process_telegram_ai, chat_id, user_text)
 
     return {"ok": True}

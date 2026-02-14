@@ -20,12 +20,16 @@ class QBrainVectorStore:
         self.bm25_retriever = None
         
         if os.path.exists(VECTOR_STORE_PATH) and os.path.exists(BM25_STORE_PATH):
+            print(f"Found existing index at {VECTOR_STORE_PATH}. Loading...")
             self.load()
+        else:
+            print(f"No index found at {VECTOR_STORE_PATH}. Starting ingestion from {settings.KB_PATH}...")
+            self.ingest_data()
 
     def ingest_data(self):
         """Rebuilds the index from QBrain folder."""
         if not os.path.exists(settings.KB_PATH):
-            print(f"Directory {settings.KB_PATH} not found.")
+            print(f"CRITICAL: Directory {settings.KB_PATH} not found. Cannot build index.")
             return
 
         print("Loading documents...")
@@ -41,15 +45,24 @@ class QBrainVectorStore:
             except Exception as e:
                 print(f"Error loading docs: {e}")
 
+        if not docs:
+            print("No documents found in QBrain folder. Index will be empty.")
+            return
+
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         chunks = text_splitter.split_documents(docs)
 
         if chunks:
             print(f"Embedding {len(chunks)} chunks...")
+            # 1. Build and Save FAISS (Semantic)
             self.vector_store = FAISS.from_documents(chunks, self.embedding_model)
             self.vector_store.save_local(VECTOR_STORE_PATH)
+            
+            # 2. Build and Save BM25 chunks (Keyword)
             with open(BM25_STORE_PATH, "wb") as f:
                 pickle.dump(chunks, f)
+            
+            # Reload to ensure consistency
             self.load()
             print("Ingestion complete. Hybrid System Ready.")
         else:
@@ -67,7 +80,7 @@ class QBrainVectorStore:
             with open(BM25_STORE_PATH, "rb") as f:
                 chunks = pickle.load(f)
             self.bm25_retriever = BM25Retriever.from_documents(chunks)
-            self.bm25_retriever.k = 5  # Default top k for keyword
+            self.bm25_retriever.k = 5
             
             print("Successfully loaded Hybrid Retrievers.")
         except Exception as e:
@@ -79,14 +92,12 @@ class QBrainVectorStore:
         Merges Semantic (FAISS) and Keyword (BM25) results.
         """
         if not self.vector_store or not self.bm25_retriever:
-            print("Indices not loaded. Attempting load...")
-            self.load()
-            if not self.vector_store: return []
+            print("Indices are not loaded. Returning empty result.")
+            return []
 
         semantic_docs = self.vector_store.similarity_search(query, k=k)
         keyword_docs = self.bm25_retriever.invoke(query)
         
-
         fused_scores = {}
         
         def apply_rrf(docs, weight):
