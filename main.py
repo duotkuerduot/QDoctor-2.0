@@ -102,15 +102,14 @@ def read_root():
     return {"message": "QDoctor System Ready", "status": "healthy"}
 
 @app.post("/ask")
-async def ask_question(request_data: AskRequest):
-    """
-    Standard endpoint for manual testing via /docs.
-    Takes JSON: {"query": "your question here"}
-    """
+async def ask_question(query: str):
+    logger.info(f"Received query: {query}")
     try:
-        response = qdoctor.process_query(request_data.query)
-        return {"response": response}
+        # Call your orchestrator
+        ai_response = qdoctor.process_query(query)
+        return {"response": ai_response}
     except Exception as e:
+        logger.error(f"Error processing query: {e}")
         return {"error": str(e)}
 
 @app.post("/telegram_webhook")
