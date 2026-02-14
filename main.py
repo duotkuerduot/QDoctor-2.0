@@ -4,7 +4,7 @@ import httpx
 import uvicorn
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel # Added for /docs compatibility
+from pydantic import BaseModel
 from typing import List, Dict, Optional
 from core.orchestrator import Orchestrator
 from config.settings import settings
@@ -15,9 +15,8 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="QDoctor 2.0 API")
 
-# --- Configuration & Global State ---
 BOT_TOKEN = settings.TELEGRAM_BOT_TOKEN
-TELEGRAM_API = f"https://149.154.167.220/bot{BOT_TOKEN}"
+TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,7 +41,6 @@ async def send_telegram_action(chat_id: int, action: str = "typing"):
     if not BOT_TOKEN:
         return
 
-    # Use verify=False because the SSL certificate is issued for 'api.telegram.org', not the IP address.
     async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
         try:
             await client.post(
@@ -56,8 +54,8 @@ async def send_telegram_message(chat_id: int, text: str):
     """Sends the final AI response to Telegram."""
     if not BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN missing.")
-        return
-
+        return 
+    
     async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
         try:
             response = await client.post(f"{TELEGRAM_API}/sendMessage", json={
@@ -66,8 +64,10 @@ async def send_telegram_message(chat_id: int, text: str):
                 "parse_mode": "Markdown" 
             })
             response.raise_for_status()
+            logger.info(f"Sent to chat {chat_id}")
         except Exception as e:
             logger.error(f"Telegram Send Error: {e}")
+            logger.error(f"Response: {response.text if 'response' in locals() else 'No response'}")  # ADD THIS
 
 def get_contextual_query(chat_id: int, current_query: str) -> str:
     history = chat_memory.get(chat_id, [])
