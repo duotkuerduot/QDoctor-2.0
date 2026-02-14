@@ -6,7 +6,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.document_loaders import DirectoryLoader, TextLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.retrievers import BM25Retriever
-from langchain.retrievers.ensemble import EnsembleRetriever
+from langchain_community.retrievers import EnsembleRetriever
 from config.settings import settings
 
 VECTOR_STORE_PATH = settings.VECTOR_DB_PATH
