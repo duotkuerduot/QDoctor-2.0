@@ -80,16 +80,28 @@ async def ask_question(query: str):
 
 @app.post("/telegram_webhook")
 async def telegram_webhook(request: Request, background_tasks: BackgroundTasks):
-    """Async endpoint that avoids Telegram timeouts."""
-    data = await request.json()
+    """Safe async endpoint that avoids Telegram timeouts and JSON crashes."""
+    try:
+        body = await request.body()
+        if not body:
+            logger.info("Received empty webhook body.")
+            return {"ok": True}
+        try:
+            data = await request.json()
+        except Exception:
+            logger.warning("Invalid JSON received.")
+            return {"ok": True}
+        if "message" in data and "text" in data["message"]:
+            chat_id = data["message"]["chat"]["id"]
+            user_text = data["message"]["text"]
+            background_tasks.add_task(send_telegram_action, chat_id)
+            background_tasks.add_task(process_telegram_ai, chat_id, user_text)
 
-    if "message" in data and "text" in data["message"]:
-        chat_id = data["message"]["chat"]["id"]
-        user_text = data["message"]["text"]
-        background_tasks.add_task(send_telegram_action, chat_id)
-        background_tasks.add_task(process_telegram_ai, chat_id, user_text)
+        return {"ok": True}
 
-    return {"ok": True}
+    except Exception as e:
+        logger.error(f"Webhook Fatal Error: {e}")
+        return {"ok": True} 
 
 async def process_telegram_ai(chat_id: int, user_text: str):
     """Handles memory updates and Orchestrator call."""
