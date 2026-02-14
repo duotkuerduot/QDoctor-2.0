@@ -30,10 +30,6 @@ COPY --chown=user . .
 RUN mkdir -p $HOME/app/storage/qbrain_faiss_index && \
     chmod -R 777 $HOME/app/storage
 
-# Initialize the FAISS index during build
-# This ensures the 'storage/' folder is ready when the app starts
-RUN python setup.py
-
 # Expose the default Hugging Face port
 EXPOSE 7860
 
