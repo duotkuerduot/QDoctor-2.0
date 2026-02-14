@@ -7,7 +7,11 @@ class Settings:
     GROQ_DECISION_API_KEY = os.getenv("GROQ_DECISION_API_KEY")
     GROQ_GENERATOR_API_KEY = os.getenv("GROQ_GENERATOR_API_KEY")
     GROQ_VALIDATOR_API_KEY = os.getenv("GROQ_VALIDATOR_API_KEY")
-    TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    _raw_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    TELEGRAM_BOT_TOKEN = _raw_token[3:] if _raw_token.startswith("bot") else _raw_token
+    
+    # Define the API URL here so it's consistent everywhere
+    TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
