@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="QDoctor 2.0 API")
 
 BOT_TOKEN = settings.TELEGRAM_BOT_TOKEN
-TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
+TELEGRAM_API = "https://api.telegram.org/bot{BOT_TOKEN}"
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,7 +41,7 @@ async def send_telegram_action(chat_id: int, action: str = "typing"):
     if not BOT_TOKEN:
         return
 
-    async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         try:
             await client.post(
                 f"{TELEGRAM_API}/sendChatAction",
@@ -56,7 +56,7 @@ async def send_telegram_message(chat_id: int, text: str):
         logger.error("TELEGRAM_BOT_TOKEN missing.")
         return 
     
-    async with httpx.AsyncClient(verify=False, timeout=20.0) as client:
+    async with httpx.AsyncClient(timeout=20.0) as client:
         try:
             response = await client.post(f"{TELEGRAM_API}/sendMessage", json={
                 "chat_id": chat_id, 
