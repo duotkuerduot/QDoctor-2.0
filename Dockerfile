@@ -5,12 +5,6 @@ FROM python:3.10-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# DNS configuration to avoid potential issues with DNS resolution in some environments
-RUN apt-get update && apt-get install -y \
-    curl \
-    dnsutils \
-    ca-certificates
-
 # Install system dependencies for FAISS and PDF processing
 RUN apt-get update && apt-get install -y \
     build-essential \
