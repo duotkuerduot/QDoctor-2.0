@@ -15,7 +15,7 @@ class Orchestrator:
     def process_query(self, user_query: str):
         print(f"\n--- Production Flow: {user_query} ---")
         
-        # 1. Cache Check (Preserved)
+        # 1. Cache Check
         cached_answer = self.cache.get(user_query)
         if cached_answer:
             print("-> Cache Hit")
