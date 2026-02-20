@@ -10,16 +10,15 @@ class Settings:
     _raw_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     TELEGRAM_BOT_TOKEN = _raw_token[3:] if _raw_token.startswith("bot") else _raw_token
     
-    # Define the API URL here so it's consistent everywhere
     TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     KB_PATH = os.getenv("KB_PATH", "QBrain")
     VECTOR_DB_PATH = os.path.join(BASE_DIR, "storage", "qbrain_faiss_index")
-    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-    LLM_MODEL = "llama-3.3-70b-versatile" 
     
+    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "ncbi/MedCPT-Query-Encoder")
+    LLM_MODEL = "llama-3.1-8b-instant" 
 
     try:
         TOP_K = int(os.getenv("TOP_K", 5))
