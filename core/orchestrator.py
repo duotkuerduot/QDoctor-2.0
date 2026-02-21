@@ -46,7 +46,7 @@ class Orchestrator:
                 is_valid = self.validator.check(context_docs, raw_answer)
                 if not is_valid:
                     print(f"CRITICAL: Hallucination blocked for query: {user_query}")
-                    return "I'm sorry, I couldn't verify that information against clinical protocols. Please consult the official Kenya Mental Health Policy 2015-2030."
+                    return "I'm sorry, I couldn't verify that information against clinical protocols. Please consult a healthcare professional for accurate advice."
             except Exception as e:
                 # Fail-safe: If the validator rate-limits, block the output for safety
                 print(f"Validation Error: {e}")
