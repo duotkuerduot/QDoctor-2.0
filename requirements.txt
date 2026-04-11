@@ -1,0 +1,16 @@
+groq
+langchain
+langchain-core
+langchain-community
+langchain-huggingface
+python-dotenv
+sentence-transformers
+pypdf
+faiss-cpu
+gunicorn
+uvicorn
+fastapi
+rank_bm25
+supabase
+python-jose[cryptography]
+httpx
