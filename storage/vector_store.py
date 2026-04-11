@@ -1,0 +1,163 @@
+import hashlib
+import os
+import pickle
+from typing import List, Dict, Optional
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_core.documents import Document
+from langchain_community.document_loaders import DirectoryLoader, TextLoader, PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.retrievers import BM25Retriever
+from config.settings import settings
+
+# Paths
+VECTOR_STORE_PATH = settings.VECTOR_DB_PATH
+BM25_STORE_PATH = os.path.join(os.path.dirname(VECTOR_STORE_PATH), "bm25_chunks.pkl")
+
+class QBrainVectorStore:
+    def __init__(self):
+        self.embedding_model = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
+        self.vector_store = None
+        self.bm25_retriever = None
+        
+        if os.path.exists(VECTOR_STORE_PATH) and os.path.exists(BM25_STORE_PATH):
+            print(f"Found existing index at {VECTOR_STORE_PATH}. Loading...")
+            self.load()
+        else:
+            print(f"No index found at {VECTOR_STORE_PATH}. Starting ingestion from {settings.KB_PATH}...")
+            self.ingest_data()
+
+    @staticmethod
+    def _infer_tier(source_path: str) -> str:
+        normalized = (source_path or "").replace("\\", "/").lower()
+        if "/kenya " in normalized or "/kenya-" in normalized or "/kenya_" in normalized:
+            return "tier_1"
+        if "kenya moh mental health resources" in normalized or "kenya legal & policy framework" in normalized:
+            return "tier_1"
+        if "nice guidelines" in normalized or "who mhgap" in normalized:
+            return "tier_2"
+        return "tier_3"
+
+    @staticmethod
+    def _build_chunk_id(doc: Document, fallback_index: Optional[int] = None) -> str:
+        source = doc.metadata.get("source", "")
+        page = doc.metadata.get("page", "")
+        chunk_index = doc.metadata.get("chunk_index", fallback_index if fallback_index is not None else 0)
+        fingerprint = f"{source}|{page}|{chunk_index}|{doc.page_content[:200]}"
+        return hashlib.sha1(fingerprint.encode("utf-8")).hexdigest()[:16]
+
+    @classmethod
+    def _enrich_document_metadata(cls, doc: Document, fallback_index: Optional[int] = None) -> Document:
+        source = doc.metadata.get("source", "")
+        doc.metadata["tier"] = doc.metadata.get("tier") or cls._infer_tier(source)
+
+        if "chunk_index" not in doc.metadata and fallback_index is not None:
+            doc.metadata["chunk_index"] = fallback_index
+
+        if not doc.metadata.get("chunk_id"):
+            doc.metadata["chunk_id"] = cls._build_chunk_id(doc, fallback_index=fallback_index)
+
+        return doc
+
+    def ingest_data(self):
+        """Rebuilds the index from QBrain folder."""
+        if not os.path.exists(settings.KB_PATH):
+            print(f"CRITICAL: Directory {settings.KB_PATH} not found. Cannot build index.")
+            return
+
+        print("Loading documents...")
+        loaders = [
+            DirectoryLoader(settings.KB_PATH, glob="**/*.txt", loader_cls=TextLoader),
+            DirectoryLoader(settings.KB_PATH, glob="**/*.pdf", loader_cls=PyPDFLoader)
+        ]
+        
+        docs = []
+        for loader in loaders:
+            try:
+                docs.extend(loader.load())
+            except Exception as e:
+                print(f"Error loading docs: {e}")
+
+        if not docs:
+            print("No documents found in QBrain folder. Index will be empty.")
+            return
+
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        chunks = text_splitter.split_documents(docs)
+
+        for index, chunk in enumerate(chunks):
+            self._enrich_document_metadata(chunk, fallback_index=index)
+
+        if chunks:
+            print(f"Embedding {len(chunks)} chunks...")
+            # 1. Build and Save FAISS (Semantic)
+            self.vector_store = FAISS.from_documents(chunks, self.embedding_model)
+            self.vector_store.save_local(VECTOR_STORE_PATH)
+            
+            # 2. Build and Save BM25 chunks (Keyword)
+            with open(BM25_STORE_PATH, "wb") as f:
+                pickle.dump(chunks, f)
+            
+            # Reload to ensure consistency
+            self.load()
+            print("Ingestion complete. Hybrid System Ready.")
+        else:
+            print("No documents found to ingest.")
+
+    def load(self):
+        """Load the FAISS vector store and BM25 index from disk."""
+        try:
+            self.vector_store = FAISS.load_local(
+                VECTOR_STORE_PATH, 
+                self.embedding_model, 
+                allow_dangerous_deserialization=True
+            )
+            
+            with open(BM25_STORE_PATH, "rb") as f:
+                chunks = pickle.load(f)
+            self.bm25_retriever = BM25Retriever.from_documents(chunks)
+            self.bm25_retriever.k = 5
+            
+            print("Successfully loaded Hybrid Retrievers.")
+        except Exception as e:
+            print(f"Error loading indices: {e}")
+
+    def retrieve(self, query: str, k: int = 5) -> List[Document]:
+        """
+        Custom Weighted Ensemble Retrieval (RRF).
+        Merges Semantic (FAISS) and Keyword (BM25) results.
+        """
+        if not self.vector_store or not self.bm25_retriever:
+            print("Indices are not loaded. Returning empty result.")
+            return []
+
+        semantic_docs = self.vector_store.similarity_search(query, k=k)
+        keyword_docs = self.bm25_retriever.invoke(query)
+        
+        fused_scores = {}
+        
+        def apply_rrf(docs, weight):
+            for rank, doc in enumerate(docs):
+                doc_content = doc.page_content
+                if doc_content not in fused_scores:
+                    fused_scores[doc_content] = {"doc": doc, "score": 0.0}
+                
+                score = weight * (1 / (rank + 60))
+                fused_scores[doc_content]["score"] += score
+
+        apply_rrf(semantic_docs, weight=0.6)
+        apply_rrf(keyword_docs, weight=0.4)
+
+        sorted_results = sorted(
+            fused_scores.values(), 
+            key=lambda x: x["score"], 
+            reverse=True
+        )
+
+        enriched_docs: List[Document] = []
+        for index, item in enumerate(sorted_results[:k]):
+            enriched_docs.append(
+                self._enrich_document_metadata(item["doc"], fallback_index=index)
+            )
+
+        return enriched_docs

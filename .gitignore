@@ -9,10 +9,12 @@ __pycache__/
 venv/
 
 # --- QDoctor Storage & Database ---
-storage/
+storage/*
+!storage/*.py
+!storage/**/*.py
+
 *.faiss
 *.pkl
-*.cache_data
 
 # --- Operating System Files ---
 .DS_Store
